@@ -1,23 +1,21 @@
-// --- FIREBASE IMPORTS ---
+// --- FIREBASE IMPORTS (Using CDN for GitHub Pages) ---
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import { getFirestore, collection, addDoc, onSnapshot, doc, deleteDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-// --- CONFIGURATION ---
-// 🔴 PASTE YOUR FIREBASE CONFIG INSIDE THESE BRACKETS 🔴
+// --- YOUR SPECIFIC CONFIGURATION ---
 const firebaseConfig = {
-  // It will look something like this:
-  // apiKey: "AIzaSyB...",
-  // authDomain: "scholarship-tracker...",
-  // projectId: "scholarship-tracker...",
-  // storageBucket: "...",
-  // messagingSenderId: "...",
-  // appId: "..."
+  apiKey: "AIzaSyDLEKard3uXZLKTeEfLFX4HM1L5LyBP5g0",
+  authDomain: "scholarship-tracker69.firebaseapp.com",
+  projectId: "scholarship-tracker69",
+  storageBucket: "scholarship-tracker69.firebasestorage.app",
+  messagingSenderId: "565273717330",
+  appId: "1:565273717330:web:4d9ad1981e9f9ea2520d8b"
 };
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-const dbCollection = collection(db, "scholarships"); // This creates a "folder" in cloud called scholarships
+const dbCollection = collection(db, "scholarships");
 
 const TARGET = 500000;
 
@@ -44,25 +42,23 @@ const elements = {
 };
 
 // --- INITIALIZATION ---
-// Instead of window.onload, we listen to the database immediately
+// Start listening to the database immediately
 setupRealtimeListener();
 setupEventListeners();
-
 
 // --- CORE FUNCTIONS ---
 
 // 1. LISTEN FOR CHANGES (Realtime!)
 function setupRealtimeListener() {
-    // This function runs AUTOMATICALLY every time someone adds data anywhere in the world
     const q = query(dbCollection, orderBy("amount", "desc"));
     
     onSnapshot(q, (snapshot) => {
         scholars = snapshot.docs.map(doc => ({
-            id: doc.id, // Firestore gives every entry a unique ID
+            id: doc.id,
             ...doc.data()
         }));
         
-        render(); // Update the screen immediately
+        render(); // Update screen instantly
     });
 }
 
@@ -90,32 +86,29 @@ async function addScholar() {
 
     if (!name || isNaN(amount) || amount <= 0) {
         // Shake animation
-        elements.input-group.style.borderColor = '#ef4444';
-        setTimeout(() => elements.input-group.style.borderColor = '', 500);
+        const inputGroup = document.querySelector('.input-group');
+        inputGroup.style.borderColor = '#ef4444';
+        setTimeout(() => inputGroup.style.borderColor = '', 500);
         return;
     }
 
-    // Disable button while saving
     elements.addBtn.disabled = true;
     elements.addBtn.innerText = "...";
 
     try {
-        // Send to Firebase
         await addDoc(dbCollection, {
             name: name,
             amount: amount,
             timestamp: Date.now()
         });
-
         playSound('success');
         
-        // Clear inputs
         elements.nameIn.value = '';
         elements.amtIn.value = '';
         elements.nameIn.focus();
     } catch (e) {
         console.error("Error adding document: ", e);
-        alert("Error saving data. Check console.");
+        alert("Error saving. Check console.");
     }
 
     elements.addBtn.disabled = false;
@@ -153,18 +146,15 @@ function createConfetti() {
 }
 
 function render() {
-    // 1. Calculate Stats
     const total = scholars.reduce((sum, s) => sum + s.amount, 0);
     const percentage = (total / TARGET) * 100;
 
-    // 2. Update Visuals
     elements.totalDisplay.innerText = '$' + total.toLocaleString();
     elements.percentDisplay.innerText = `${percentage.toFixed(1)}% of Goal`;
 
     const visualHeight = Math.min(percentage, 100);
     elements.liquidFill.style.height = `${visualHeight}%`;
 
-    // 3. Check Goal
     if (total >= TARGET && !isGoalReached) {
         triggerCelebration();
         elements.percentDisplay.innerText = `GOAL REACHED! (${percentage.toFixed(1)}%)`;
@@ -173,11 +163,8 @@ function render() {
         elements.appContainer.classList.remove('goal-reached');
     }
 
-    // 4. Render List
     elements.list.innerHTML = '';
-    // Sorting is handled by Firestore query now, but safe to keep here too
-    // scholars.sort((a, b) => b.amount - a.amount);
-
+    
     scholars.forEach((s, index) => {
         const item = document.createElement('div');
         item.className = 'list-item';
