@@ -1,0 +1,248 @@
+/* --- RESET & VARS --- */
+:root {
+    --bg-dark: #09090b;
+    --card-bg: rgba(255, 255, 255, 0.05);
+    --border-color: rgba(255, 255, 255, 0.1);
+    --text-main: #ffffff;
+    --text-muted: #a1a1aa;
+    --juice-main: #ff9f1c; /* A brighter, more vivid orange */
+    --juice-light: #ffbf69;
+    --font-stack: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+* { box-sizing: border-box; outline: none; }
+
+body {
+    margin: 0;
+    padding: 40px 20px;
+    background-color: var(--bg-dark);
+    color: var(--text-main);
+    font-family: var(--font-stack);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    overflow-x: hidden; /* Prevent horizontal scroll from animations */
+}
+
+.app-container {
+    width: 100%;
+    max-width: 500px;
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    position: relative;
+    z-index: 10;
+}
+
+/* --- ANIMATIONS --- */
+@keyframes fadeInScale {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+}
+
+/* --- HEADER --- */
+header {
+    text-align: center;
+    animation: fadeInScale 0.8s ease-out;
+}
+h1 { font-size: 2.2rem; margin: 0; font-weight: 800; letter-spacing: -0.5px; }
+.subtitle { color: var(--text-muted); font-size: 1rem; margin-top: 5px; }
+
+/* --- CSS JAR VISUAL --- */
+.visual-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 20px;
+    position: relative;
+    animation: float 6s ease-in-out infinite;
+}
+
+.jar-container {
+    position: relative;
+    width: 180px;
+    height: 240px;
+}
+
+/* The main glass jar body */
+.jar {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.05);
+    border: 4px solid rgba(255, 255, 255, 0.2);
+    border-top: none; /* Lid will cover the top */
+    border-bottom-left-radius: 25px;
+    border-bottom-right-radius: 25px;
+    overflow: hidden; /* Contains the liquid */
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3), inset 0 0 20px rgba(255, 255, 255, 0.05);
+    z-index: 2;
+}
+
+/* The jar lid */
+.jar-lid {
+    position: absolute;
+    top: -10px;
+    left: -5%;
+    width: 110%;
+    height: 20px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    z-index: 3;
+}
+
+/* The orange liquid inside */
+.liquid {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 0%; /* Controlled by JS */
+    background: linear-gradient(to top, var(--juice-main), var(--juice-light));
+    border-top-left-radius: 15px; /* Curved surface */
+    border-top-right-radius: 15px;
+    transition: height 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: inset 0 -5px 10px rgba(0, 0, 0, 0.2), 0 0 20px var(--juice-main);
+}
+
+/* --- STATS --- */
+.stats-container {
+    text-align: center;
+    z-index: 30;
+    margin-top: 20px;
+}
+.big-money {
+    font-size: 2.8rem;
+    font-weight: 800;
+    color: var(--juice-main);
+    text-shadow: 0 0 20px rgba(255, 159, 28, 0.5);
+    transition: all 0.3s ease;
+}
+.target-label { font-size: 1rem; color: var(--text-muted); transition: color 0.3s ease; }
+
+/* --- INPUTS --- */
+.input-group {
+    background: var(--card-bg);
+    padding: 15px;
+    border-radius: 16px;
+    border: 1px solid var(--border-color);
+    display: flex;
+    gap: 10px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    animation: fadeInScale 0.8s ease-out 0.2s backwards;
+}
+
+input {
+    background: rgba(0,0,0,0.3);
+    border: 1px solid var(--border-color);
+    color: white;
+    padding: 12px 16px;
+    border-radius: 10px;
+    width: 100%;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+input:focus {
+    border-color: var(--juice-main);
+    box-shadow: 0 0 0 3px rgba(255, 159, 28, 0.2);
+}
+
+button.add-btn {
+    background: var(--juice-main);
+    color: white;
+    border: none;
+    padding: 0 25px;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+button.add-btn:hover {
+    background: var(--juice-light);
+    box-shadow: 0 0 20px var(--juice-main);
+    transform: translateY(-2px);
+}
+
+button.add-btn:active {
+    transform: translateY(1px);
+}
+
+/* --- LEADERBOARD LIST --- */
+.list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    animation: fadeInScale 0.8s ease-out 0.4s backwards;
+}
+.list-item {
+    display: flex;
+    justify-content: space-between;
+    background: var(--card-bg);
+    padding: 14px 18px;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    align-items: center;
+    transition: all 0.3s ease;
+    animation: fadeInScale 0.5s ease-out; /* Animation for new items */
+}
+.list-item:hover {
+    transform: translateX(5px);
+    border-color: var(--juice-main);
+    background: rgba(255, 159, 28, 0.1);
+}
+.name-side { font-weight: 600; display: flex; gap: 12px; align-items: center; font-size: 1.05rem; }
+.rank { color: var(--juice-main); font-weight: 800; }
+.money-side { font-weight: 700; display: flex; align-items: center; gap: 12px; font-size: 1.05rem; }
+.del-btn {
+    background: none;
+    border: none;
+    color: #ef4444;
+    cursor: pointer;
+    opacity: 0.6;
+    font-size: 1.4rem;
+    transition: all 0.2s ease;
+    padding: 4px;
+    line-height: 1;
+}
+.del-btn:hover { opacity: 1; transform: scale(1.2); }
+
+/* --- CELEBRATION STATES --- */
+.goal-reached .big-money {
+    color: #ffeb3b; /* Yellow for celebration */
+    animation: pulse 2s infinite;
+}
+.goal-reached .target-label {
+    color: #ffeb3b;
+    font-weight: bold;
+}
+@keyframes pulse {
+    0% { transform: scale(1); text-shadow: 0 0 20px rgba(255, 235, 59, 0.5); }
+    50% { transform: scale(1.05); text-shadow: 0 0 30px rgba(255, 235, 59, 0.8); }
+    100% { transform: scale(1); text-shadow: 0 0 20px rgba(255, 235, 59, 0.5); }
+}
+
+/* Confetti items */
+.confetti {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background-color: #ffeb3b;
+    opacity: 0.8;
+    z-index: 100;
+    animation: fall 4s linear forwards;
+}
+@keyframes fall {
+    to { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+}

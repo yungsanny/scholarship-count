@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Total Scholarship</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <audio id="clickSound" src="click.mp3"></audio>
+    <audio id="successSound" src="success.mp3"></audio>
+    <audio id="celebrateSound" src="celebrate.mp3"></audio>
+
+    <div class="app-container">
+        <header>
+            <h1>Scholarship Fund</h1>
+            <div class="subtitle">Collective Goal: $500,000</div>
+        </header>
+
+        <div class="visual-section">
+            <div class="jar-container">
+                <div class="jar">
+                    <div class="liquid" id="liquidFill"></div>
+                </div>
+                <div class="jar-lid"></div>
+            </div>
+
+            <div class="stats-container">
+                <div class="big-money" id="totalDisplay">$0</div>
+                <div class="target-label" id="percentDisplay">0.0% of Goal</div>
+            </div>
+        </div>
+
+        <div class="input-group">
+            <input type="text" id="nameIn" placeholder="Name" autocomplete="off">
+            <input type="number" id="amtIn" placeholder="Amount ($)" autocomplete="off">
+            <button class="add-btn" id="addBtn">Add</button>
+        </div>
+
+        <div class="list" id="list"></div>
+    </div>
+    
+    <div id="confetti-container"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>
