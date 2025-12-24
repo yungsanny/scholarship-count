@@ -1,6 +1,25 @@
+// --- FIREBASE IMPORTS ---
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+import { getFirestore, collection, addDoc, onSnapshot, doc, deleteDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
 // --- CONFIGURATION ---
+// 🔴 PASTE YOUR FIREBASE CONFIG INSIDE THESE BRACKETS 🔴
+const firebaseConfig = {
+  // It will look something like this:
+  // apiKey: "AIzaSyB...",
+  // authDomain: "scholarship-tracker...",
+  // projectId: "scholarship-tracker...",
+  // storageBucket: "...",
+  // messagingSenderId: "...",
+  // appId: "..."
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const dbCollection = collection(db, "scholarships"); // This creates a "folder" in cloud called scholarships
+
 const TARGET = 500000;
-const STORAGE_KEY = 'scholarship_data_v5'; // Increment version
 
 // --- STATE ---
 let scholars = [];
@@ -14,7 +33,7 @@ const elements = {
     list: document.getElementById('list'),
     totalDisplay: document.getElementById('totalDisplay'),
     percentDisplay: document.getElementById('percentDisplay'),
-    liquidFill: document.getElementById('liquidFill'), // Updated ID
+    liquidFill: document.getElementById('liquidFill'),
     appContainer: document.querySelector('.app-container'),
     confettiContainer: document.getElementById('confetti-container'),
     sounds: {
@@ -25,89 +44,99 @@ const elements = {
 };
 
 // --- INITIALIZATION ---
-window.onload = () => {
-    loadData();
-    setupEventListeners();
-    render();
-};
+// Instead of window.onload, we listen to the database immediately
+setupRealtimeListener();
+setupEventListeners();
 
-// --- EVENT LISTENERS ---
+
+// --- CORE FUNCTIONS ---
+
+// 1. LISTEN FOR CHANGES (Realtime!)
+function setupRealtimeListener() {
+    // This function runs AUTOMATICALLY every time someone adds data anywhere in the world
+    const q = query(dbCollection, orderBy("amount", "desc"));
+    
+    onSnapshot(q, (snapshot) => {
+        scholars = snapshot.docs.map(doc => ({
+            id: doc.id, // Firestore gives every entry a unique ID
+            ...doc.data()
+        }));
+        
+        render(); // Update the screen immediately
+    });
+}
+
 function setupEventListeners() {
     elements.addBtn.addEventListener('click', addScholar);
-    // Add entry on 'Enter' key in the amount input
     elements.amtIn.addEventListener('keypress', (e) => {
         if(e.key === 'Enter') addScholar();
     });
 }
 
-// --- CORE FUNCTIONS ---
-
-function loadData() {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-        scholars = JSON.parse(saved);
-    }
-}
-
-function saveData() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(scholars));
-}
-
 function playSound(soundName) {
     const sound = elements.sounds[soundName];
     if (sound) {
-        sound.currentTime = 0; // Rewind to start
+        sound.currentTime = 0;
         sound.play().catch(e => console.warn('Sound blocked:', e));
     }
 }
 
-function addScholar() {
+// 2. ADD DATA TO CLOUD
+async function addScholar() {
     playSound('click');
     
     const name = elements.nameIn.value.trim();
     const amount = parseInt(elements.amtIn.value);
 
     if (!name || isNaN(amount) || amount <= 0) {
-        // Simple shake animation for invalid input
-        elements.input-group.classList.add('shake');
-        setTimeout(() => elements.input-group.classList.remove('shake'), 500);
+        // Shake animation
+        elements.input-group.style.borderColor = '#ef4444';
+        setTimeout(() => elements.input-group.style.borderColor = '', 500);
         return;
     }
 
-    const existingIndex = scholars.findIndex(s => s.name.toLowerCase() === name.toLowerCase());
-    if (existingIndex > -1) {
-        scholars[existingIndex].amount = amount;
-    } else {
-        scholars.push({ id: Date.now(), name: name, amount: amount });
+    // Disable button while saving
+    elements.addBtn.disabled = true;
+    elements.addBtn.innerText = "...";
+
+    try {
+        // Send to Firebase
+        await addDoc(dbCollection, {
+            name: name,
+            amount: amount,
+            timestamp: Date.now()
+        });
+
+        playSound('success');
+        
+        // Clear inputs
+        elements.nameIn.value = '';
+        elements.amtIn.value = '';
+        elements.nameIn.focus();
+    } catch (e) {
+        console.error("Error adding document: ", e);
+        alert("Error saving data. Check console.");
     }
 
-    playSound('success');
-    saveData();
-    render();
-
-    // Clear inputs and focus
-    elements.nameIn.value = '';
-    elements.amtIn.value = '';
-    elements.nameIn.focus();
+    elements.addBtn.disabled = false;
+    elements.addBtn.innerText = "Add";
 }
 
-function removeScholar(id) {
+// 3. DELETE DATA FROM CLOUD
+async function removeScholar(id) {
     playSound('click');
-    if (confirm("Are you sure you want to delete this entry?")) {
-        scholars = scholars.filter(s => s.id !== id);
-        saveData();
-        render();
+    if (confirm("Delete this entry for everyone?")) {
+        await deleteDoc(doc(db, "scholarships", id));
     }
 }
 
 function triggerCelebration() {
-    if (isGoalReached) return; // Already celebrated
+    if (isGoalReached) return;
     isGoalReached = true;
 
     playSound('celebrate');
     elements.appContainer.classList.add('goal-reached');
 
-    // Create confetti
     for (let i = 0; i < 100; i++) {
         createConfetti();
     }
@@ -120,8 +149,6 @@ function createConfetti() {
     confetti.style.backgroundColor = ['#ffeb3b', '#ff9f1c', '#ffffff'][Math.floor(Math.random() * 3)];
     confetti.style.animationDuration = (Math.random() * 2 + 3) + 's';
     elements.confettiContainer.appendChild(confetti);
-
-    // Remove confetti after animation
     setTimeout(() => confetti.remove(), 5000);
 }
 
@@ -134,11 +161,10 @@ function render() {
     elements.totalDisplay.innerText = '$' + total.toLocaleString();
     elements.percentDisplay.innerText = `${percentage.toFixed(1)}% of Goal`;
 
-    // Cap visual height at 100% for the jar
     const visualHeight = Math.min(percentage, 100);
     elements.liquidFill.style.height = `${visualHeight}%`;
 
-    // 3. Check for Goal Reached Condition
+    // 3. Check Goal
     if (total >= TARGET && !isGoalReached) {
         triggerCelebration();
         elements.percentDisplay.innerText = `GOAL REACHED! (${percentage.toFixed(1)}%)`;
@@ -149,7 +175,8 @@ function render() {
 
     // 4. Render List
     elements.list.innerHTML = '';
-    scholars.sort((a, b) => b.amount - a.amount);
+    // Sorting is handled by Firestore query now, but safe to keep here too
+    // scholars.sort((a, b) => b.amount - a.amount);
 
     scholars.forEach((s, index) => {
         const item = document.createElement('div');
@@ -164,7 +191,6 @@ function render() {
                 <button class="del-btn">&times;</button>
             </div>
         `;
-        // Add delete functionality
         item.querySelector('.del-btn').addEventListener('click', () => removeScholar(s.id));
         elements.list.appendChild(item);
     });
